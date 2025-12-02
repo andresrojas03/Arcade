@@ -1,0 +1,62 @@
+//Snake algorithm for Arduino UNO arcade machine for ddm final project
+
+//Limits for a 128x64 display
+xLimits = [0, 128]
+yLimits = [0, 64]
+
+direction = ["right", "left", "up", "down"]
+snake = [[xLimits(1)/2, yLimits(1)/2]]
+snake_length = 1
+score = 0
+play = true 
+print_fruit(snake)  //takes the snake vector coordinates to not print over the snake
+
+//Main loop
+while play = true:
+  
+  //input handling
+  if button_pressed:
+    new_direction = get_new_direction(button_pressed)
+    if new_direction is not opposite of current direction:
+      direction = new_direction 
+    end if
+  end if 
+  
+  //Movement
+  new_head_pos = calculate_next_position(snake[head], direction) //head is whether the 0 or n snake vector pos 
+
+  //To make the snake go to the other side of the screen 
+  if is_out_of_bounds(new_head_pos, xLimits, yLimits):
+    change_screen_side(snake, xLimits, yLimits)
+  end if 
+
+  //Collision check 
+  if is_self_collision(new_head_pos, snake):
+    play = false
+    break
+  end if
+
+  //Updating snake pos
+  snake.insert_back(new_head_pos)  //to make the snake grow by the tail
+
+  //Fruit check 
+  if new_head_pos == fruit_pos:
+    score += 1
+    fruit_pos = generate_new_fruit_pos(snake) //to make sure the new fruit doesn't spawn on the snake positions
+  else: 
+    snake.remove_back()
+  end if 
+
+  //Drawing the screen
+  clear_screen()
+  print_snake(snake)
+  print_fruit(fruit_pos)
+
+  delay(move_speed) //controlling snake game speed for arduino
+
+end while 
+
+
+
+
+

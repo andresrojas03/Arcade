@@ -1,0 +1,82 @@
+//Algorithm for Pong game for the Arduino UNO arcade machine for ddm final project
+
+//Limits of the 128x64 display
+xLimits = [0, 128]
+yLimits = [0, 64]
+
+player = [xLimits(1), (yLimits(0) + yLimits(1))/2]
+com = [xLimits(0), (yLimits(0) + yLimits(1))/2]
+ball = [(xLimits(0) + xLimits(1))/2, (yLimits(0) + yLimits(1))/2]
+//diagonal movement for the ball
+ball_dx = 1
+ball_dy = 1
+score = 0
+points = 0
+play = true
+
+
+while play:
+
+  
+  //Check inputs
+  if button_pressed:
+    player_pos = update_player_pos(button_pressed)
+  end if 
+  
+  //Ball movement
+  new_ball_x = ball[0] + ball_dx
+  new_ball_y = ball[1] + ball_dy
+
+  //collision 
+  
+  //Top/Bottom wall collision 
+  if new_ball_y <= yLimits(0) or new_ball_y >= yLimits(1):
+    ball_dy = -ball_dy //reverse vertical direction
+    new_ball_y = ball[1] + ball_dy
+  end if
+
+  //Player or com collision
+  if new_ball_x == x_player_pos and is_collision_y(new_ball_y, player_pos) or 
+    new_ball_x == x_com_pos and is_collision_y(new_ball_y, com_pos):
+    ball_dx = -ball_dx
+
+ 
+  
+  //update score
+  if new_ball <= xLimits(0):
+    player_points += 1
+    reset_ball_and_players()
+  else if ball == xLimits(1):
+    com_points += 1
+    reset_ball_and_players()
+  end if 
+
+  //if no event update ball pos 
+  ball = [new_ball_x, new_ball_y]
+
+  //Drawing 
+  draw_player(player)
+  draw_com(com)
+  draw_ball(ball)
+
+  delay(game_speed)
+
+
+  //ending the game if someone got 5 points 
+  if player_points == 5:
+    play = false
+    break
+  else if com_points == 5:
+    play = false
+    break
+  end if 
+
+end while 
+
+
+
+  
+
+
+
+

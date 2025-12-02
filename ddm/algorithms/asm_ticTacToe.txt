@@ -1,0 +1,113 @@
+// Tic Tac Toe game for two players on a 3x3 grid
+
+// Initialize game variables
+board = [[' ', ' ', ' '],
+         [' ', ' ', ' '],
+         [' ', ' ', ' ']]
+current_player = 'X'
+game_over = false
+winner = null
+
+// Main game loop
+while not game_over:
+  
+  // Display current board state
+  display_board(board)
+  
+  // Get player input
+  row, col = get_player_input(current_player)
+  
+  // Validate move
+  while not is_valid_move(board, row, col):
+    display_invalid_move_message()
+    row, col = get_player_input(current_player)
+  
+  // Update board with player's move
+  board[row][col] = current_player
+  
+  // Check for win condition
+  if check_win(board, current_player):
+    game_over = true
+    winner = current_player
+    break
+  
+  // Check for draw condition
+  if check_draw(board):
+    game_over = true
+    break
+  
+  // Switch players
+  current_player = switch_player(current_player)
+
+// End game sequence
+display_board(board)
+if winner != null:
+  display_winner_message(winner)
+else:
+  display_draw_message()
+
+// Helper Functions
+
+function display_board(board):
+  // Clear screen and display current board state
+  for i in range(3):
+    print(" " + board[i][0] + " | " + board[i][1] + " | " + board[i][2])
+    if i < 2:
+      print("-----------")
+
+function get_player_input(player):
+  // Get row and column input from current player
+  print("Player " + player + "'s turn")
+  row = input("Enter row (0-2): ")
+  col = input("Enter column (0-2): ")
+  return row, col
+
+function is_valid_move(board, row, col):
+  // Check if move is within bounds and cell is empty
+  if row not in [0,1,2] or col not in [0,1,2]:
+    return false
+  if board[row][col] != ' ':
+    return false
+  return true
+
+function check_win(board, player):
+  // Check rows, columns, and diagonals for win
+  for i in range(3):
+    // Check rows
+    if board[i][0] == player and board[i][1] == player and board[i][2] == player:
+      return true
+    // Check columns
+    if board[0][i] == player and board[1][i] == player and board[2][i] == player:
+      return true
+  
+  // Check diagonals
+  if board[0][0] == player and board[1][1] == player and board[2][2] == player:
+    return true
+  if board[0][2] == player and board[1][1] == player and board[2][0] == player:
+    return true
+  
+  return false
+
+function check_draw(board):
+  // Check if all cells are filled
+  for row in range(3):
+    for col in range(3):
+      if board[row][col] == ' ':
+        return false
+  return true
+
+function switch_player(current_player):
+  // Alternate between X and O
+  if current_player == 'X':
+    return 'O'
+  else:
+    return 'X'
+
+function display_invalid_move_message():
+  print("Invalid move! Please choose an empty cell within bounds (0-2).")
+
+function display_winner_message(winner):
+  print("Player " + winner + " wins!")
+
+function display_draw_message():
+  print("Game ended in a draw!")

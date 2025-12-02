@@ -1,0 +1,138 @@
+// Flappy Bird Game for Arduino UNO Arcade Machine
+
+// Game constants
+SCREEN_WIDTH = 128
+SCREEN_HEIGHT = 64
+GRAVITY = 0.5
+FLAP_STRENGTH = -8
+PIPE_WIDTH = 20
+PIPE_GAP = 30
+PIPE_SPACING = 60
+GROUND_HEIGHT = 10
+BIRD_SIZE = 8
+
+// Game variables
+bird_x = 30
+bird_y = SCREEN_HEIGHT / 2
+bird_velocity = 0
+game_speed = 3
+pipes = []  // List of [x, gap_y] positions
+score = 0
+game_over = false
+game_started = false
+
+// Initialize first pipe
+pipes.append([SCREEN_WIDTH, random(GROUND_HEIGHT + 10, SCREEN_HEIGHT - GROUND_HEIGHT - PIPE_GAP - 10)])
+
+// Main game loop
+while true:
+    
+    // Input handling - flap when button pressed
+    if button_pressed:
+        if not game_started:
+            game_started = true
+        if not game_over:
+            bird_velocity = FLAP_STRENGTH
+    
+    if game_started and not game_over:
+        // Apply physics
+        bird_velocity = bird_velocity + GRAVITY
+        bird_y = bird_y + bird_velocity
+        
+        // Move pipes
+        for i from 0 to pipes.length-1:
+            pipes[i][0] = pipes[i][0] - game_speed
+            
+            // Remove pipes that are off screen
+            if pipes[i][0] + PIPE_WIDTH < 0:
+                pipes.remove(i)
+                score = score + 1
+                break
+        
+        // Generate new pipes
+        if pipes[pipes.length-1][0] < SCREEN_WIDTH - PIPE_SPACING:
+            gap_y = random(GROUND_HEIGHT + 10, SCREEN_HEIGHT - GROUND_HEIGHT - PIPE_GAP - 10)
+            pipes.append([SCREEN_WIDTH, gap_y])
+        
+        // Collision detection
+        // Ground collision
+        if bird_y + BIRD_SIZE > SCREEN_HEIGHT - GROUND_HEIGHT:
+            game_over = true
+        
+        // Ceiling collision
+        if bird_y < 0:
+            bird_y = 0
+            bird_velocity = 0
+        
+        // Pipe collision
+        for pipe in pipes:
+            pipe_x = pipe[0]
+            gap_y = pipe[1]
+            
+            // Check if bird is aligned with pipe horizontally
+            if bird_x + BIRD_SIZE > pipe_x and bird_x < pipe_x + PIPE_WIDTH:
+                // Check if bird is NOT in the gap
+                if bird_y < gap_y or bird_y + BIRD_SIZE > gap_y + PIPE_GAP:
+                    game_over = true
+                    break
+    
+    // Drawing
+    clear_display()
+    
+    if game_started:
+        // Draw pipes
+        for pipe in pipes:
+            pipe_x = pipe[0]
+            gap_y = pipe[1]
+            
+            // Top pipe
+            draw_rectangle(pipe_x, 0, PIPE_WIDTH, gap_y)
+            
+            // Bottom pipe
+            draw_rectangle(pipe_x, gap_y + PIPE_GAP, PIPE_WIDTH, SCREEN_HEIGHT - gap_y - PIPE_GAP)
+        
+        // Draw ground
+        draw_rectangle(0, SCREEN_HEIGHT - GROUND_HEIGHT, SCREEN_WIDTH, GROUND_HEIGHT)
+        
+        // Draw bird
+        draw_rectangle(bird_x, bird_y, BIRD_SIZE, BIRD_SIZE)
+        
+        // Draw score
+        display_score(score)
+        
+        if game_over:
+            display_game_over()
+    else:
+        // Start screen
+        display_start_message()
+    
+    delay(16)  // ~60 FPS
+    
+    // Reset game if over and button pressed
+    if game_over and button_pressed:
+        reset_game()
+
+// Helper Functions
+
+function reset_game():
+    bird_y = SCREEN_HEIGHT / 2
+    bird_velocity = 0
+    pipes = []
+    pipes.append([SCREEN_WIDTH, random(GROUND_HEIGHT + 10, SCREEN_HEIGHT - GROUND_HEIGHT - PIPE_GAP - 10)])
+    score = 0
+    game_over = false
+
+function display_score(score):
+    // Display current score on screen
+    draw_text(SCREEN_WIDTH / 2, 10, str(score))
+
+function display_start_message():
+    // Display "Press button to start"
+    draw_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, "PRESS BUTTON")
+    draw_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 10, "TO START")
+
+function display_game_over():
+    // Display game over message and final score
+    draw_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 - 10, "GAME OVER")
+    draw_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, "SCORE: " + str(score))
+    draw_text(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2 + 10, "PRESS TO RESTART")

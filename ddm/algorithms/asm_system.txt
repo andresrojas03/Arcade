@@ -1,0 +1,207 @@
+// Algorithm for Arcade Machine System on Arduino UNO
+
+// System Components
+Let Arcade be the arcade machine system
+Let display be the 128x64 OLED display
+Let menu be the main navigation state
+Let games be the collection of available games: [snake, pong, flappy_bird]
+Let buttons be the input controls: [btn_confirm, btn_deny, btn_left, btn_right, btn_power]
+
+// System States
+power_on = false
+current_state = "boot"
+previous_state = "boot"
+current_game_index = 0
+selected_game = null
+game_running = false
+
+// System Constants
+TOTAL_GAMES = 3
+GAME_NAMES = ["SNAKE", "PONG", "TIC TAC TOE" ]
+
+// Main System Loop
+while true:
+  
+  // Power Management
+  if power_received and not power_on:
+    initialize_system()
+    power_on = true
+    current_state = "boot"
+  
+  if power_on:
+    
+    // State Machine
+    switch current_state:
+      
+      case "boot":
+        display_boot_sequence()
+        delay(2000)  // Show boot screen for 2 seconds
+        current_state = "menu"
+        break
+      
+      case "menu":
+        handle_menu_state()
+        break
+      
+      case "game_selected":
+        handle_game_selected_state()
+        break
+      
+      case "game_running":
+        handle_game_running_state()
+        break
+      
+      case "game_paused":
+        handle_game_paused_state()
+        break
+      
+      case "game_over":
+        handle_game_over_state()
+        break
+      
+      case "shutdown":
+        handle_shutdown_state()
+        break
+  
+  else:
+    // System is off
+    display_clear()
+    power_led_off()
+
+// State Handlers
+
+function handle_menu_state():
+  display_menu()
+  highlight_current_game(current_game_index)
+  
+  // Input Handling
+  if btn_left_pressed:
+    current_game_index = (current_game_index - 1) % TOTAL_GAMES
+    if current_game_index < 0:
+      current_game_index = TOTAL_GAMES - 1
+  
+  else if btn_right_pressed:
+    current_game_index = (current_game_index + 1) % TOTAL_GAMES
+  
+  else if btn_confirm_pressed:
+    selected_game = games[current_game_index]
+    current_state = "game_selected"
+  
+  else if btn_power_pressed:
+    current_state = "shutdown"
+
+function handle_game_selected_state():
+  display_game_preview(current_game_index)
+  display_controls("CONFIRM: Start  DENY: Back")
+  
+  if btn_confirm_pressed:
+    current_state = "game_running"
+    start_game(selected_game)
+  
+  else if btn_deny_pressed:
+    current_state = "menu"
+
+function handle_game_running_state():
+  // Run the actual game
+  game_result = run_game_loop(selected_game)
+  
+  if game_result == "game_over":
+    current_state = "game_over"
+  else if game_result == "paused":
+    current_state = "game_paused"
+  else if game_result == "quit":
+    current_state = "menu"
+
+function handle_game_paused_state():
+  display_pause_screen()
+  
+  if btn_confirm_pressed:
+    current_state = "game_running"
+  else if btn_deny_pressed:
+    current_state = "menu"
+    stop_game(selected_game)
+
+function handle_game_over_state():
+  display_game_over_screen()
+  display_final_score()
+  
+  if btn_confirm_pressed:
+    current_state = "game_running"  // Restart same game
+    restart_game(selected_game)
+  else if btn_deny_pressed:
+    current_state = "menu"
+    stop_game(selected_game)
+
+function handle_shutdown_state():
+  display_shutdown_sequence()
+  delay(1000)
+  power_on = false
+  shutdown_system()
+
+// System Functions
+
+function initialize_system():
+  initialize_display()
+  initialize_buttons()
+  initialize_sound()
+  power_led_on()
+  load_games()
+
+function display_menu():
+  clear_display()
+  draw_text(40, 10, "ARCADE MENU")
+  draw_line(0, 15, 128, 15)
+  
+  // Display available games
+  for i from 0 to TOTAL_GAMES-1:
+    y_pos = 25 + (i * 12)
+    if i == current_game_index:
+      draw_text(10, y_pos, "> " + GAME_NAMES[i])
+    else:
+      draw_text(10, y_pos, "  " + GAME_NAMES[i])
+  
+  draw_text(10, 55, "POWER: Shutdown")
+
+function display_game_preview(game_index):
+  clear_display()
+  draw_text(40, 10, GAME_NAMES[game_index])
+  draw_line(0, 15, 128, 15)
+  
+  // Game-specific preview
+  switch game_index:
+    case 0:  // Snake
+      draw_text(20, 30, "Eat food, grow longer")
+      draw_snake_preview()
+      break
+    case 1:  // Pong
+      draw_text(25, 30, "Bounce the ball")
+      draw_pong_preview()
+      break
+    case 2:  // Flappy Bird
+      draw_text(20, 30, "Fly between pipes")
+      draw_bird_preview()
+      break
+  
+  draw_text(10, 55, "CONFIRM: Start  DENY: Back")
+
+function start_game(game):
+  game_running = true
+  game.initialize()
+  // Game-specific initialization
+
+function run_game_loop(game):
+  // This would call the specific game's main loop
+  // Returns: "playing", "game_over", "paused", or "quit"
+  return game.main_loop()
+
+function stop_game(game):
+  game_running = false
+  game.cleanup()
+
+function shutdown_system():
+  // Clean shutdown procedures
+  if game_running:
+    stop_game(selected_game)
+  display_clear()
+  set_pins_low()
+  // Note: Arduino UNO doesn't actually power off without external hardware
